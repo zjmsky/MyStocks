@@ -5,12 +5,28 @@ using Xamarin.Forms;
 
 namespace MyStocksCMOV.Objects {
 				class Graph {
-								public const int NUM_HELPER_LINES = 5;
+
+
+
+								public const float graphLeftPaddingPercentage = 0.075f;
+								public const float graphTopPaddingPercentage = 0.05f;
+								public const float graphWidthPercentage = 0.9f;
+								public const float graphHeightPercentage = 0.95f;
+
+								public const int NUM_HELPER_LINES = 8;
+
+
+								public struct GraphValue{
+												public Point rightAnchor;
+												public string value;
+
+								}
+
 								readonly List<List<double>> lines = new List<List<double>>();
 								readonly List<List<SKPoint>> graphLines = new List<List<SKPoint>>();
 								readonly List<List<SKPoint>> graphLinesFill = new List<List<SKPoint>>();
 								readonly List<List<SKPoint>> graphHelperLines = new List<List<SKPoint>>();
-
+								readonly List<GraphValue> graphValues = new List<GraphValue>();
 
 								public Graph(List<List<double>> lines)
 								{
@@ -21,7 +37,7 @@ namespace MyStocksCMOV.Objects {
 								public Graph()
 								{
 												List<double> line = new List<double> {
-																15, 19,46,21,44,
+																15, 19,46,21,44, 0,
 																48,13,19,11,23,
 																50,52,23,54,32,
 36,18,48,45,40,
@@ -45,7 +61,7 @@ namespace MyStocksCMOV.Objects {
 
 												List<double> line2 = new List<double> {
 																49,36,8,51,36,
-50,7,52,25,50,
+50,7,52,25,50, 1,
 27,9,32,51,43,
 10,14,33,34,21,
 38,33,34,53,13,
@@ -90,23 +106,23 @@ namespace MyStocksCMOV.Objects {
 												}
 
 
-												double xInc = 0.95 * width / numPoints;
-												double yInc = ( 95 - minHeightPercentage ) / 100 * height / NUM_HELPER_LINES;
-												double scale = ( maxValue - minValue ) / ( 95 - minHeightPercentage );
-												double currentX = 0.025f * width;
+												double xInc = graphWidthPercentage * width / numPoints;
+												double yInc = ( 1 - graphTopPaddingPercentage - minHeightPercentage / 100 ) * height / NUM_HELPER_LINES;
+												double scale = ( maxValue - minValue ) / ( (graphHeightPercentage * 100) - minHeightPercentage);
+												double currentX = graphLeftPaddingPercentage * width;
 
 												double minY = height - ( minHeightPercentage / 100 * height );
 
 												SKPoint startPoint = new SKPoint((float) currentX, (float) minY);
-												SKPoint endPoint = new SKPoint(0.975f * width, (float) minY);
-
+												SKPoint endPoint = new SKPoint((graphWidthPercentage + graphLeftPaddingPercentage) * width, (float) minY);
 
 												foreach (List<double> line in this.lines) {
 																List<SKPoint> graphLine = new List<SKPoint>();
 																List<SKPoint> graphLineFill = new List<SKPoint>();
 																graphLineFill.Add(startPoint);
 																foreach (double pointY in line) {
-																				double y = height - ( ( pointY - minValue ) / scale + minHeightPercentage ) / 100 * height;
+																				double y = minY - ( ( pointY - minValue ) / scale / 100 * height);
+
 																				double x = currentX;
 																				currentX += xInc;
 
@@ -116,25 +132,35 @@ namespace MyStocksCMOV.Objects {
 																				graphLineFill.Add(newPoint);
 
 																}
-																currentX = 0.025f * width;
+																currentX = graphLeftPaddingPercentage * width;
 																this.graphLines.Add(graphLine);
 																graphLineFill.Add(endPoint);
 																graphLineFill.Add(startPoint);
 																this.graphLinesFill.Add(graphLineFill);
 												}
 
+												float valueInc = (float) ( maxValue - minValue ) / NUM_HELPER_LINES;
+
 												for (int i = 0; i <= NUM_HELPER_LINES; ++i) {
-																double x = 0.025 * width + ( width * 0.95 / NUM_HELPER_LINES * i );
+																double x = graphLeftPaddingPercentage * width + ( width * graphWidthPercentage / NUM_HELPER_LINES * i );
 																List<SKPoint> helperLineVertical = new List<SKPoint> {
 																				new SKPoint((float) x, (float) minY),
-																				new SKPoint((float) x, 0.025f * height)
+																				new SKPoint((float) x, graphTopPaddingPercentage * height)
 																};
 
-																double y = minY - ( 0.95 * height * ( 1 - minHeightPercentage / 100 ) / NUM_HELPER_LINES * i );
+																double y = minY - ( (graphHeightPercentage - graphTopPaddingPercentage) * height * ( 1 - minHeightPercentage / 100 ) / NUM_HELPER_LINES * i );
 																List<SKPoint> helperLineHorizontal = new List<SKPoint> {
 																				new SKPoint((float)currentX, (float) y),
-																				new SKPoint((float) 0.975 * width, (float) y)
+																				new SKPoint((graphLeftPaddingPercentage + graphWidthPercentage) * width, (float) y)
 																};
+
+																float value = (float) minValue + valueInc * i;
+
+																graphValues.Add(new GraphValue() {
+																				value = value.ToString("0.00"),
+																				rightAnchor = new Point(graphLeftPaddingPercentage * width, y)
+																});
+
 
 																this.graphHelperLines.Add(helperLineHorizontal);
 																this.graphHelperLines.Add(helperLineVertical);
@@ -155,6 +181,11 @@ namespace MyStocksCMOV.Objects {
 								public List<List<SKPoint>> GetGraphLinesFill()
 								{
 												return this.graphLinesFill;
+								}
+
+								public List<GraphValue> GetGraphValues()
+								{
+												return graphValues;
 								}
 
 				}

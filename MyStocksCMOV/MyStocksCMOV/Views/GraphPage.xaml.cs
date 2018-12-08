@@ -10,6 +10,10 @@ namespace MyStocksCMOV.Views {
 				[XamlCompilation(XamlCompilationOptions.Compile)]
 				public partial class GraphPage : ContentPage {
 
+								public const float minHeightPercentage = 0.5f;
+
+								public const float arrowOffset = 7;
+
 								public SKColor[] colors = {
 												SKColors.Blue,
 												SKColors.BurlyWood,
@@ -23,9 +27,13 @@ namespace MyStocksCMOV.Views {
 												SKColors.Black
 								};
 
+								Graph graph;
+
 								public GraphPage()
 								{
 												this.InitializeComponent();
+												graph = new Graph();
+												
 								}
 
 								void OnCanvasViewPaintSurface(object sender, SKPaintSurfaceEventArgs args)
@@ -35,27 +43,30 @@ namespace MyStocksCMOV.Views {
 												SKCanvas canvas = surface.Canvas;
 
 												canvas.Clear();
+												graph.CalculatePoints(minHeightPercentage * 100, info.Width, info.Height);
 
 
-												SKPaint paint = new SKPaint {
-																StrokeWidth = 5,
-																StrokeCap = SKStrokeCap.Round,
-																IsAntialias = true
-												};
 
-												Graph graph = new Graph();
-												graph.CalculatePoints(50.0, info.Width, info.Height);
+
 
 												List<List<SKPoint>> graphLines = graph.GetGraphLines();
 												List<List<SKPoint>> graphLinesFill = graph.GetGraphLinesFill();
 												List<List<SKPoint>> graphHelperLines = graph.GetGraphHelperLines();
 
-												System.Diagnostics.Debug.WriteLine(graphLines.Count);
-												System.Diagnostics.Debug.WriteLine(graphLinesFill.Count);
+												SKPaint paint = new SKPaint {
+																Color = SKColors.LightGray.WithAlpha(0xAA),
+																StrokeWidth = 1,
+																StrokeCap = SKStrokeCap.Square,
+																Style = SKPaintStyle.Stroke,
+																IsAntialias = true
+												};        
+												foreach (List<SKPoint> graphHelperLine in graphHelperLines)
+																canvas.DrawPoints(SKPointMode.Lines, graphHelperLine.ToArray(), paint);
 
+												paint.StrokeCap = SKStrokeCap.Round;
 
 												for (int i = 0; i < graphLines.Count; ++i) {
-																paint.Color = colors[i % 10];
+																paint.Color = this.colors[i % colors.Length];
 																paint.Style = SKPaintStyle.Stroke;
 																paint.StrokeWidth = 2;
 																canvas.DrawPoints(SKPointMode.Polygon, graphLines[i].ToArray(), paint);
@@ -67,32 +78,65 @@ namespace MyStocksCMOV.Views {
 																path.AddPoly(graphLinesFill[i].ToArray());
 																canvas.DrawPath(path, paint);
 												}
-												paint.Color = SKColors.HotPink.WithAlpha(0xAA);
-												paint.StrokeWidth = 1;
-												paint.StrokeCap = SKStrokeCap.Square;
-												paint.Style = SKPaintStyle.Stroke;
-												foreach (List<SKPoint> graphHelperLine in graphHelperLines)
-																canvas.DrawPoints(SKPointMode.Lines, graphHelperLine.ToArray(), paint);
 
 												paint.StrokeWidth = 4;
 												paint.Color = SKColors.Black;
 
+
+												float bottomY = minHeightPercentage * info.Height;
+												float topY = Graph.graphTopPaddingPercentage * info.Height;
+												float leftX = Graph.graphLeftPaddingPercentage * info.Width;
+												float rightX = (Graph.graphLeftPaddingPercentage + Graph.graphWidthPercentage) * info.Width;
+
 												List<SKPoint> horizontalAxis = new List<SKPoint> {
-																new SKPoint(0.025f * info.Width, (float)(50.0/100 * info.Height)),
-																new SKPoint(0.975f * info.Width, (float)(50.0/100 * info.Height))
+
+																//Axis
+																new SKPoint(leftX, bottomY),
+																new SKPoint(rightX, bottomY),
+
+
+																//Arrow
+																new SKPoint(rightX, bottomY),
+																new SKPoint(rightX - arrowOffset, bottomY - arrowOffset),
+
+																new SKPoint(rightX, bottomY),
+																new SKPoint(rightX - arrowOffset, bottomY + arrowOffset),
+
+
 												};
 
 												List<SKPoint> verticalAxis = new List<SKPoint> {
-																new SKPoint(0.025f * info.Width, (float)(50.0/100 * info.Height)),
-																new SKPoint(0.025f * info.Width, (float)(0.025 * info.Height))
+																
+																//Axis
+																new SKPoint(leftX, bottomY),
+																new SKPoint(leftX, topY),
+
+																//Arrow
+
+																new SKPoint(leftX, topY),
+																new SKPoint(leftX - arrowOffset, topY + arrowOffset),
+
+																new SKPoint(leftX, topY),
+																new SKPoint(leftX + arrowOffset, topY + arrowOffset),
 												};
 
 												canvas.DrawPoints(SKPointMode.Lines, horizontalAxis.ToArray(), paint);
 												canvas.DrawPoints(SKPointMode.Lines, verticalAxis.ToArray(), paint);
 
+												List<Graph.GraphValue> graphValues = graph.GetGraphValues();
+
+												SKPaint textPaint = new SKPaint {
+																Color = SKColors.Blue,
+																IsAntialias = true,
+																TextSize = 0.07f * info.Width / 3
+												};
+
+
+												foreach(Graph.GraphValue graphValue in graphValues) {
+																canvas.DrawText(graphValue.value, (float)graphValue.rightAnchor.X - 4 * paint.TextSize, (float)graphValue.rightAnchor.Y + textPaint.TextSize / 2, textPaint);
+												}
 
 
 								}
 				}
 }
-	
