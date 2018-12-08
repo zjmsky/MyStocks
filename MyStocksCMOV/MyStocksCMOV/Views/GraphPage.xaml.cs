@@ -67,9 +67,31 @@ namespace MyStocksCMOV.Views {
 																path.AddPoly(graphLinesFill[i].ToArray());
 																canvas.DrawPath(path, paint);
 												}
-												paint.Color = SKColors.HotPink;
+												paint.Color = SKColors.HotPink.WithAlpha(0xAA);
+												paint.StrokeWidth = 1;
+												paint.StrokeCap = SKStrokeCap.Square;
+												paint.Style = SKPaintStyle.Stroke;
 												foreach (List<SKPoint> graphHelperLine in graphHelperLines)
-																canvas.DrawPoints(SKPointMode.Points, graphHelperLine.ToArray(), paint);
+																canvas.DrawPoints(SKPointMode.Lines, graphHelperLine.ToArray(), paint);
+
+												paint.StrokeWidth = 4;
+												paint.Color = SKColors.Black;
+
+												List<SKPoint> horizontalAxis = new List<SKPoint> {
+																new SKPoint(0.025f * info.Width, (float)(50.0/100 * info.Height)),
+																new SKPoint(0.975f * info.Width, (float)(50.0/100 * info.Height))
+												};
+
+												List<SKPoint> verticalAxis = new List<SKPoint> {
+																new SKPoint(0.025f * info.Width, (float)(50.0/100 * info.Height)),
+																new SKPoint(0.025f * info.Width, (float)(0.025 * info.Height))
+												};
+
+												canvas.DrawPoints(SKPointMode.Lines, horizontalAxis.ToArray(), paint);
+												canvas.DrawPoints(SKPointMode.Lines, verticalAxis.ToArray(), paint);
+
+
+
 								}
 				}
 }

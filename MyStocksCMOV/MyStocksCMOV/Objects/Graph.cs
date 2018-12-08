@@ -5,15 +5,14 @@ using Xamarin.Forms;
 
 namespace MyStocksCMOV.Objects {
 				class Graph {
-								public const int NUM_HELPER_LINES = 10;
+								public const int NUM_HELPER_LINES = 5;
+								readonly List<List<double>> lines = new List<List<double>>();
+								readonly List<List<SKPoint>> graphLines = new List<List<SKPoint>>();
+								readonly List<List<SKPoint>> graphLinesFill = new List<List<SKPoint>>();
+								readonly List<List<SKPoint>> graphHelperLines = new List<List<SKPoint>>();
 
-								List<List<Point>> lines = new List<List<Point>>();
-								List<List<SKPoint>> graphLines = new List<List<SKPoint>>();
-								List<List<SKPoint>> graphLinesFill = new List<List<SKPoint>>();
-								List<List<SKPoint>> graphHelperLines = new List<List<SKPoint>>();
 
-
-								public Graph(List<List<Point>> lines)
+								public Graph(List<List<double>> lines)
 								{
 												this.lines = lines;
 								}
@@ -21,46 +20,57 @@ namespace MyStocksCMOV.Objects {
 								//Only for testing purposes
 								public Graph()
 								{
-												List<Point> line = new List<Point> {
-																new Point(0, 100),
-																new Point(0, 120),
-																new Point(0, 130),
-																new Point(0, 115),
-																new Point(0, 105),
-																new Point(0, 100),
-																new Point(0, 250),
-																new Point(0, 200)
+												List<double> line = new List<double> {
+																15, 19,46,21,44,
+																48,13,19,11,23,
+																50,52,23,54,32,
+36,18,48,45,40,
+55,48,43,28,43,
+13,5,21,52,5,
+35,12,22,22,23,
+44,35,44,26,18,
+33,16,17,52,48,
+16,28,32,5,47,
+34,34,23,17,12,
+28,48,34,36,21,
+27,5,55,12,42,
+14,42,27,45,5,
+25,31,47,25,45,
+12,29,33,29,54,
+53,33,50,40,32,
+38,34,41,21,32,
+47,21,40,7,55,
+15,19,48,7,33
 												};
 
-
-												List<Point> line2 = new List<Point> {
-																new Point(0, 20),
-																new Point(0, 35),
-																new Point(0, 30),
-																new Point(0, 45),
-																new Point(0, 50),
-																new Point(0, 25),
-																new Point(0, 30),
-																new Point(0, 40)
+												List<double> line2 = new List<double> {
+																49,36,8,51,36,
+50,7,52,25,50,
+27,9,32,51,43,
+10,14,33,34,21,
+38,33,34,53,13,
+5,47,46,47,52,
+44,22,17,34,12,
+21,34,34,17,52,
+15,14,50,46,40,
+6,34,21,28,33,
+49,53,21,30,18,
+55,32,15,37,42,
+48,24,54,43,49,
+9,20,42,34,46,
+17,15,28,11,24,
+18,48,49,17,22,
+14,20,45,25,21,
+18,35,14,26,50,
+24,22,36,46,9,
+49,13,52,37,52
 												};
 
-												List<Point> line3 = new List<Point> {
-																new Point(0, 350),
-																new Point(0, 365),
-																new Point(0, 360),
-																new Point(0, 385),
-																new Point(0, 400),
-																new Point(0, 420),
-																new Point(0, 405),
-																new Point(0, 410)
-												};
-
-												lines.Add(line);
-												lines.Add(line2);
-												lines.Add(line3);
-
+												this.lines.Add(line);
+												this.lines.Add(line2);
 
 								}
+
 
 
 
@@ -72,10 +82,10 @@ namespace MyStocksCMOV.Objects {
 												int numPoints = this.lines[0].Count - 1;
 
 
-												foreach (List<Point> line in this.lines) {
-																foreach (Point point in line) {
-																				minValue = Math.Min(point.Y, minValue);
-																				maxValue = Math.Max(point.Y, maxValue);
+												foreach (List<double> line in this.lines) {
+																foreach (double pointY in line) {
+																				minValue = Math.Min(pointY, minValue);
+																				maxValue = Math.Max(pointY, maxValue);
 																}
 												}
 
@@ -87,16 +97,16 @@ namespace MyStocksCMOV.Objects {
 
 												double minY = height - ( minHeightPercentage / 100 * height );
 
-												SKPoint startPoint = new SKPoint((float)currentX, (float) minY);
+												SKPoint startPoint = new SKPoint((float) currentX, (float) minY);
 												SKPoint endPoint = new SKPoint(0.975f * width, (float) minY);
-												
 
-												foreach (List<Point> line in this.lines) {
+
+												foreach (List<double> line in this.lines) {
 																List<SKPoint> graphLine = new List<SKPoint>();
 																List<SKPoint> graphLineFill = new List<SKPoint>();
 																graphLineFill.Add(startPoint);
-																foreach (Point point in line) {
-																				double y = height - ((point.Y - minValue)/ scale + minHeightPercentage) / 100  * height;
+																foreach (double pointY in line) {
+																				double y = height - ( ( pointY - minValue ) / scale + minHeightPercentage ) / 100 * height;
 																				double x = currentX;
 																				currentX += xInc;
 
@@ -107,27 +117,44 @@ namespace MyStocksCMOV.Objects {
 
 																}
 																currentX = 0.025f * width;
-																graphLines.Add(graphLine);
+																this.graphLines.Add(graphLine);
 																graphLineFill.Add(endPoint);
 																graphLineFill.Add(startPoint);
-																graphLinesFill.Add(graphLineFill);
+																this.graphLinesFill.Add(graphLineFill);
+												}
+
+												for (int i = 0; i <= NUM_HELPER_LINES; ++i) {
+																double x = 0.025 * width + ( width * 0.95 / NUM_HELPER_LINES * i );
+																List<SKPoint> helperLineVertical = new List<SKPoint> {
+																				new SKPoint((float) x, (float) minY),
+																				new SKPoint((float) x, 0.025f * height)
+																};
+
+																double y = minY - ( 0.95 * height * ( 1 - minHeightPercentage / 100 ) / NUM_HELPER_LINES * i );
+																List<SKPoint> helperLineHorizontal = new List<SKPoint> {
+																				new SKPoint((float)currentX, (float) y),
+																				new SKPoint((float) 0.975 * width, (float) y)
+																};
+
+																this.graphHelperLines.Add(helperLineHorizontal);
+																this.graphHelperLines.Add(helperLineVertical);
 												}
 
 								}
 
 								public List<List<SKPoint>> GetGraphLines()
 								{
-												return graphLines;
+												return this.graphLines;
 								}
 
 								public List<List<SKPoint>> GetGraphHelperLines()
 								{
-												return graphHelperLines;
+												return this.graphHelperLines;
 								}
 
 								public List<List<SKPoint>> GetGraphLinesFill()
 								{
-												return graphLinesFill;
+												return this.graphLinesFill;
 								}
 
 				}
