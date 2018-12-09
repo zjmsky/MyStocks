@@ -11,12 +11,14 @@ namespace MyStocksCMOV.Views {
 				public partial class GraphPage : ContentPage {
 
 								public const float minHeightPercentage = 0.5f;
-
+								public const float axisExtensionPercentage = 0.02f;
 								public const float arrowOffset = 7;
+								public const float textScalePercentage = 0.7f;
+								public const float textPaddingPercentage = 0.1f;
 
 								public SKColor[] colors = {
 												SKColors.Blue,
-												SKColors.BurlyWood,
+												SKColors.Chocolate,
 												SKColors.Red,
 												SKColors.Orange,
 												SKColors.Yellow,
@@ -43,10 +45,12 @@ namespace MyStocksCMOV.Views {
 												SKCanvas canvas = surface.Canvas;
 
 												canvas.Clear();
-												graph.CalculatePoints(minHeightPercentage * 100, info.Width, info.Height);
 
+												float graphMinHeightPercentage = minHeightPercentage;
+												if (info.Width > info.Height)
+																graphMinHeightPercentage = Graph.graphTopPaddingPercentage;
 
-
+												graph.CalculatePoints(graphMinHeightPercentage * 100, info.Width, info.Height);
 
 
 												List<List<SKPoint>> graphLines = graph.GetGraphLines();
@@ -83,10 +87,10 @@ namespace MyStocksCMOV.Views {
 												paint.Color = SKColors.Black;
 
 
-												float bottomY = minHeightPercentage * info.Height;
-												float topY = Graph.graphTopPaddingPercentage * info.Height;
+												float bottomY = (1 - graphMinHeightPercentage) * info.Height;
+												float topY = (Graph.graphTopPaddingPercentage - axisExtensionPercentage) * info.Height;
 												float leftX = Graph.graphLeftPaddingPercentage * info.Width;
-												float rightX = (Graph.graphLeftPaddingPercentage + Graph.graphWidthPercentage) * info.Width;
+												float rightX = (Graph.graphLeftPaddingPercentage + Graph.graphWidthPercentage + axisExtensionPercentage) * info.Width;
 
 												List<SKPoint> horizontalAxis = new List<SKPoint> {
 
@@ -104,7 +108,6 @@ namespace MyStocksCMOV.Views {
 
 
 												};
-
 												List<SKPoint> verticalAxis = new List<SKPoint> {
 																
 																//Axis
@@ -128,12 +131,18 @@ namespace MyStocksCMOV.Views {
 												SKPaint textPaint = new SKPaint {
 																Color = SKColors.Blue,
 																IsAntialias = true,
-																TextSize = 0.07f * info.Width / 3
 												};
 
+												float textWidth = textPaint.MeasureText("22.22");
+												textPaint.TextSize = Graph.graphLeftPaddingPercentage * info.Width * textScalePercentage * textPaint.TextSize / textWidth;
+												SKRect textBounds = new SKRect();
+												textPaint.MeasureText("22.22", ref textBounds);
 
-												foreach(Graph.GraphValue graphValue in graphValues) {
-																canvas.DrawText(graphValue.value, (float)graphValue.rightAnchor.X - 4 * paint.TextSize, (float)graphValue.rightAnchor.Y + textPaint.TextSize / 2, textPaint);
+												float xText = info.Width * (Graph.graphLeftPaddingPercentage + Graph.graphLeftPaddingPercentage * textPaddingPercentage )  / 2 - textBounds.MidX;
+
+
+												foreach (Graph.GraphValue graphValue in graphValues) {
+																canvas.DrawText(graphValue.value, xText, (float)graphValue.rightAnchor.Y - textBounds.MidY, textPaint);
 												}
 
 
