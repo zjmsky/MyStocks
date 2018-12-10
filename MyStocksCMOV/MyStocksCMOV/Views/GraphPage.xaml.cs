@@ -1,7 +1,9 @@
 ﻿
+using MyStocksCMOV.Models;
 using MyStocksCMOV.Objects;
 using SkiaSharp;
 using SkiaSharp.Views.Forms;
+using System;
 using System.Collections.Generic;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
@@ -10,32 +12,60 @@ namespace MyStocksCMOV.Views {
 				[XamlCompilation(XamlCompilationOptions.Compile)]
 				public partial class GraphPage : ContentPage {
 
-								public const float minHeightPercentage = 0.5f;
+
 								public const float axisExtensionPercentage = 0.02f;
 								public const float arrowOffset = 7;
 								public const float textScalePercentage = 0.7f;
 								public const float textPaddingPercentage = 0.1f;
 
-								public SKColor[] colors = {
-												SKColors.Blue,
-												SKColors.Chocolate,
-												SKColors.Red,
-												SKColors.Orange,
-												SKColors.Yellow,
-												SKColors.Green,
-												SKColors.Pink,
-												SKColors.Purple,
-												SKColors.MediumVioletRed,
-												SKColors.Black
-								};
+								private float graphWidthPercentage = Graph.defaultGraphWidthPercentage;
+								private float graphMinHeightPercentage = Graph.defaultGraphMinHeightPercentage;
+
 
 								Graph graph;
+								private StocksViewModel stocksViewModel;
 
 								public GraphPage()
 								{
 												this.InitializeComponent();
-												graph = new Graph();
-												
+												this.graph = new Graph();
+
+
+												this.stocksViewModel = new StocksViewModel();
+												this.GetUserCompanies();
+												this.BindingContext = this.stocksViewModel;
+
+								}
+
+								private void GetUserCompanies()
+								{
+												//Get from local storage later
+												List<Stock> companies = new List<Stock>() {
+																new Stock("Apple", "APL", SKColors.Blue),
+																new Stock("Microsoft", "MCRST", SKColors.Pink),
+																new Stock("Google", "GGL", SKColors.Brown)
+												};
+
+												companies[0].AddStock(new List<double>() {
+																5, 10, 15, 10, 50, 40, 30, 20, 25, 28, 31, 59, 12, 65, 5, 10, 12
+												});
+												companies[1].AddStock(new List<double>() {
+																10, 25, 20, 30, 50, 60, 100, 20, 30, 59, 20, 23, 24, 30, 40, 25, 30
+												});
+												companies[2].AddStock(new List<double>() {
+																0, 15, 35, 10, 20, 50, 30, 40, 50, 40, 40, 40, 45, 25, 28, 32, 35
+												});
+
+												bool enable = true;
+
+												foreach (Stock company in companies) {
+																graph.activeStocks.Add(company, enable);
+																this.stocksViewModel.Stocks.Add(new StockCell(company.companyCode, company.companyName, company.stock, enable));
+																enable = false;
+
+												}
+
+
 								}
 
 								void OnCanvasViewPaintSurface(object sender, SKPaintSurfaceEventArgs args)
@@ -46,16 +76,21 @@ namespace MyStocksCMOV.Views {
 
 												canvas.Clear();
 
-												float graphMinHeightPercentage = minHeightPercentage;
+
 												if (info.Width > info.Height)
-																graphMinHeightPercentage = Graph.graphTopPaddingPercentage;
+																this.graphMinHeightPercentage = Graph.graphTopPaddingPercentage;
+												else
+																this.graphMinHeightPercentage = Graph.defaultGraphMinHeightPercentage;
 
-												graph.CalculatePoints(graphMinHeightPercentage * 100, info.Width, info.Height);
+												DateTime startDate = new DateTime(2018, 11, 1);
+												DateTime endDate = new DateTime(2018, 12, 8);
+
+												bool success = this.graph.CalculatePoints(Graph.defaultGraphWidthPercentage, this.graphMinHeightPercentage * 100, info.Width, info.Height, startDate, endDate);
 
 
-												List<List<SKPoint>> graphLines = graph.GetGraphLines();
-												List<List<SKPoint>> graphLinesFill = graph.GetGraphLinesFill();
-												List<List<SKPoint>> graphHelperLines = graph.GetGraphHelperLines();
+												List<List<SKPoint>> graphLines = this.graph.GetGraphLines();
+												List<List<SKPoint>> graphLinesFill = this.graph.GetGraphLinesFill();
+												List<List<SKPoint>> graphHelperLines = this.graph.GetGraphHelperLines();
 
 												SKPaint paint = new SKPaint {
 																Color = SKColors.LightGray.WithAlpha(0xAA),
@@ -63,14 +98,14 @@ namespace MyStocksCMOV.Views {
 																StrokeCap = SKStrokeCap.Square,
 																Style = SKPaintStyle.Stroke,
 																IsAntialias = true
-												};        
+												};
 												foreach (List<SKPoint> graphHelperLine in graphHelperLines)
 																canvas.DrawPoints(SKPointMode.Lines, graphHelperLine.ToArray(), paint);
 
 												paint.StrokeCap = SKStrokeCap.Round;
 
 												for (int i = 0; i < graphLines.Count; ++i) {
-																paint.Color = this.colors[i % colors.Length];
+																paint.Color = graph.colorList[i];
 																paint.Style = SKPaintStyle.Stroke;
 																paint.StrokeWidth = 2;
 																canvas.DrawPoints(SKPointMode.Polygon, graphLines[i].ToArray(), paint);
@@ -87,10 +122,10 @@ namespace MyStocksCMOV.Views {
 												paint.Color = SKColors.Black;
 
 
-												float bottomY = (1 - graphMinHeightPercentage) * info.Height;
-												float topY = (Graph.graphTopPaddingPercentage - axisExtensionPercentage) * info.Height;
+												float bottomY = ( 1 - this.graphMinHeightPercentage ) * info.Height;
+												float topY = ( Graph.graphTopPaddingPercentage - axisExtensionPercentage ) * info.Height;
 												float leftX = Graph.graphLeftPaddingPercentage * info.Width;
-												float rightX = (Graph.graphLeftPaddingPercentage + Graph.graphWidthPercentage + axisExtensionPercentage) * info.Width;
+												float rightX = ( Graph.graphLeftPaddingPercentage + this.graphWidthPercentage + axisExtensionPercentage ) * info.Width;
 
 												List<SKPoint> horizontalAxis = new List<SKPoint> {
 
@@ -125,27 +160,52 @@ namespace MyStocksCMOV.Views {
 
 												canvas.DrawPoints(SKPointMode.Lines, horizontalAxis.ToArray(), paint);
 												canvas.DrawPoints(SKPointMode.Lines, verticalAxis.ToArray(), paint);
+												if (success) {
+																List<Graph.GraphValue> graphValues = this.graph.GetGraphValues();
+																List<Graph.GraphValue> xValues = this.graph.GetXValues();
 
-												List<Graph.GraphValue> graphValues = graph.GetGraphValues();
+																SKPaint textPaint = new SKPaint {
+																				Color = SKColors.Blue,
+																				IsAntialias = true,
+																};
 
-												SKPaint textPaint = new SKPaint {
-																Color = SKColors.Blue,
-																IsAntialias = true,
-												};
+																float textWidth = textPaint.MeasureText("22.22");
+																textPaint.TextSize = Graph.graphLeftPaddingPercentage * info.Width * textScalePercentage * textPaint.TextSize / textWidth;
+																SKRect textBounds = new SKRect();
 
-												float textWidth = textPaint.MeasureText("22.22");
-												textPaint.TextSize = Graph.graphLeftPaddingPercentage * info.Width * textScalePercentage * textPaint.TextSize / textWidth;
-												SKRect textBounds = new SKRect();
-												textPaint.MeasureText("22.22", ref textBounds);
+																foreach (Graph.GraphValue graphValue in graphValues) {
+																				textPaint.MeasureText(graphValue.Value, ref textBounds);
 
-												float xText = info.Width * (Graph.graphLeftPaddingPercentage + Graph.graphLeftPaddingPercentage * textPaddingPercentage )  / 2 - textBounds.MidX;
+																				float xText = info.Width * ( Graph.graphLeftPaddingPercentage + Graph.graphLeftPaddingPercentage * textPaddingPercentage ) / 2 - textBounds.MidX;
+
+																				canvas.DrawText(graphValue.Value, xText, (float) graphValue.anchor.Y - textBounds.MidY, textPaint);
+																}
+
+																foreach (Graph.GraphValue xValue in xValues) {
+																				textPaint.MeasureText(xValue.Value, ref textBounds);
+																				float yText = bottomY + textBounds.Height + 10;
+																				canvas.DrawText(xValue.Value, (float) xValue.anchor.X - textBounds.MidX, yText, textPaint);
+																}
+												}
+								}
+
+								private void SwitchCell_OnChanged(object sender, ToggledEventArgs e)
+								{
+												SwitchCell switchedCell = (SwitchCell) sender;
+
+												string companyCellText = switchedCell.Text;
+
+												foreach (Stock company in graph.activeStocks.Keys) {
+																string companyText = company.companyCode + " - " + company.companyName + ": " + company.stock;
 
 
-												foreach (Graph.GraphValue graphValue in graphValues) {
-																canvas.DrawText(graphValue.value, xText, (float)graphValue.rightAnchor.Y - textBounds.MidY, textPaint);
+																if (companyText.Equals(companyCellText)) {
+																				graph.activeStocks[company] = switchedCell.On;
+																				break;
+																}
 												}
 
-
+												this.canvasView.InvalidateSurface();
 								}
 				}
 }

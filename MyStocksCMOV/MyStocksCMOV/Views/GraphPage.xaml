@@ -4,7 +4,33 @@
 													xmlns:skiaforms="clr-namespace:SkiaSharp.Views.Forms;assembly=SkiaSharp.Views.Forms"
 													x:Class="MyStocksCMOV.Views.GraphPage">
     <ContentPage.Content>
-								<skiaforms:SKCanvasView x:Name="canvasView"
-                                PaintSurface="OnCanvasViewPaintSurface"/>
+								<Grid RowSpacing="25">
+												<Grid.RowDefinitions>
+																<RowDefinition Height="65*" />
+																<RowDefinition Height="35*" />
+												</Grid.RowDefinitions>
+												<skiaforms:SKCanvasView x:Name="canvasView"
+																																				Grid.Row="0"
+																																			 PaintSurface="OnCanvasViewPaintSurface">
+																
+												</skiaforms:SKCanvasView>
+												<ScrollView Grid.Row="1">												
+																<ListView ItemsSource="{Binding Stocks}" 
+																		VerticalOptions="FillAndExpand" 
+																		CachingStrategy="RecycleElement"
+																		SelectionMode="None">
+																<ListView.ItemTemplate>
+																				<DataTemplate>
+																												<SwitchCell Text="{Binding CompanyText}"
+																																								x:Name="{Binding CompanyName}"
+																																								On="{Binding On}"
+																																								OnChanged="SwitchCell_OnChanged">
+																												</SwitchCell>
+																				</DataTemplate>
+																</ListView.ItemTemplate>
+												</ListView>
+												</ScrollView>
+
+								</Grid>
 				</ContentPage.Content>
 </ContentPage>
