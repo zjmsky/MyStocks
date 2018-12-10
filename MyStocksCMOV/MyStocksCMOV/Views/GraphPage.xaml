@@ -6,16 +6,15 @@
     <ContentPage.Content>
 								<Grid RowSpacing="25">
 												<Grid.RowDefinitions>
-																<RowDefinition Height="65*" />
-																<RowDefinition Height="35*" />
+																<RowDefinition Height="7*" />
+																<RowDefinition Height="3*" />
 												</Grid.RowDefinitions>
 												<skiaforms:SKCanvasView x:Name="canvasView"
 																																				Grid.Row="0"
 																																			 PaintSurface="OnCanvasViewPaintSurface">
 																
 												</skiaforms:SKCanvasView>
-												<ScrollView Grid.Row="1">												
-																<ListView ItemsSource="{Binding Stocks}" 
+																<ListView Grid.Row="1" ItemsSource="{Binding Stocks}" 
 																		VerticalOptions="FillAndExpand" 
 																		CachingStrategy="RecycleElement"
 																		SelectionMode="None">
@@ -29,8 +28,6 @@
 																				</DataTemplate>
 																</ListView.ItemTemplate>
 												</ListView>
-												</ScrollView>
-
 								</Grid>
 				</ContentPage.Content>
 </ContentPage>
